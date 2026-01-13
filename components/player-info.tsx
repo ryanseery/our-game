@@ -22,7 +22,7 @@ export function PlayerInfo({ name, score }: { name: string; score: number }) {
   return (
     <View style={styles.root}>
       <Text style={styles.score}>{score}</Text>
-      <Text style={styles.label}>Player One</Text>
+      <Text style={styles.label}>{name}</Text>
     </View>
   );
 }

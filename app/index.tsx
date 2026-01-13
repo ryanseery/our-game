@@ -10,6 +10,7 @@ const styles = StyleSheet.create({
   text: {
     textAlign: 'center',
     fontSize: 50,
+    marginBottom: 12,
   },
   button: {
     backgroundColor: '#007AFF',

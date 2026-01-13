@@ -1,16 +1,11 @@
 import { Card } from '@/components/card';
+import { DuelButton } from '@/components/duel-button';
 import { PlayerInfo } from '@/components/player-info';
 import { Results, Winner } from '@/components/results';
 import { Rounds } from '@/components/rounds';
 import { PokemonDetail, usePokemon } from '@/hooks/use-fetch-pokemon';
 import { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 const styles = StyleSheet.create({
   root: {
@@ -43,23 +38,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     width: '100%',
     marginBottom: 16,
-  },
-  duelButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    backgroundColor: '#f26419',
-    borderRadius: 12,
-    boxShadow: '0px 4px 12px rgba(0,0,0,0.25)',
-    elevation: 4,
-  },
-  duelLabel: {
-    color: '#0b132b',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  duelButtonDisabled: {
-    backgroundColor: '#8b4520',
   },
 });
 
@@ -145,18 +123,12 @@ export default function HomeScreen() {
                   isWinner={currentBattle.winner === 'two'}
                 />
               </View>
-              <Pressable
-                style={[
-                  styles.duelButton,
-                  !totalRounds && styles.duelButtonDisabled,
-                ]}
-                disabled={!totalRounds}
-                onPress={roundsPlayed >= totalRounds ? handleReset : handleDuel}
-              >
-                <Text style={styles.duelLabel}>
-                  {roundsPlayed >= totalRounds ? 'New Game' : 'Duel'}
-                </Text>
-              </Pressable>
+              <DuelButton
+                totalRounds={totalRounds}
+                roundsPlayed={roundsPlayed}
+                handleReset={handleReset}
+                handleDuel={handleDuel}
+              />
               <Rounds totalRounds={totalRounds} roundsPlayed={roundsPlayed} />
             </View>
           </View>
