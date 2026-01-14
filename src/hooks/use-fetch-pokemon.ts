@@ -1,24 +1,9 @@
-import { randomSplitArray } from '@/util/shuffle';
 import { useEffect, useState } from 'react';
+import { PokemonDetail } from 'types/pokemon';
+import { randomSplitArray } from 'utils/shuffle';
 
 type PokemonListResult = { name: string; url: string };
 type PokemonApiListResponse = { results: PokemonListResult[] };
-type PokemonType = { slot: number; type: { name: string; url: string } };
-type PokemonStats = {
-  base_stat: number;
-  effort: number;
-  stat: {
-    name: string;
-    url: string;
-  };
-};
-export type PokemonDetail = {
-  id: number;
-  name: string;
-  sprites?: { front_default?: string };
-  types?: PokemonType[];
-  stats: PokemonStats[];
-};
 
 export const usePokemon = (limit = 150) => {
   const [pokemonList, setPokemonList] = useState<PokemonDetail[]>([]);

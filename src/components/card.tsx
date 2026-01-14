@@ -1,6 +1,6 @@
-import { PokemonDetail } from '@/hooks/use-fetch-pokemon';
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
+import { PokemonDetail } from 'types/pokemon';
 
 const styles = StyleSheet.create({
   root: {

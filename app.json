@@ -41,6 +41,11 @@
         }
       ]
     ],
+    "extra": {
+      "expo-router": {
+        "appRoot": "src/app"
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true,

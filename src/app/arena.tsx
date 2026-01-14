@@ -1,11 +1,12 @@
-import { Card } from '@/components/card';
-import { DuelButton } from '@/components/duel-button';
-import { PlayerInfo } from '@/components/player-info';
-import { Results, Winner } from '@/components/results';
-import { Rounds } from '@/components/rounds';
-import { PokemonDetail, usePokemon } from '@/hooks/use-fetch-pokemon';
+import { Card } from 'components/card';
+import { DuelButton } from 'components/duel-button';
+import { PlayerInfo } from 'components/player-info';
+import { Results, Winner } from 'components/results';
+import { Rounds } from 'components/rounds';
+import { usePokemon } from 'hooks/use-fetch-pokemon';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { PokemonDetail } from 'types/pokemon';
 
 const styles = StyleSheet.create({
   root: {

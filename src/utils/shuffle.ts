@@ -1,4 +1,4 @@
-import { PokemonDetail } from '@/hooks/use-fetch-pokemon';
+import { PokemonDetail } from 'types/pokemon';
 
 // Function to shuffle an array using the Fisher-Yates algorithm
 function shuffleArray(array: PokemonDetail[]) {
