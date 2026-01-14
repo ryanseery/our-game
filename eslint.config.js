@@ -9,7 +9,8 @@ module.exports = defineConfig([
     settings: {
       'import/resolver': {
         typescript: {
-          project: './tsconfig.json',
+          project: ['./tsconfig.json'],
+          alwaysTryTypes: true,
         },
       },
     },
