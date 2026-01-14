@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PokemonDetail } from 'types/pokemon';
 import { randomSplitArray } from 'utils/shuffle';
 
@@ -6,16 +6,15 @@ type PokemonListResult = { name: string; url: string };
 type PokemonApiListResponse = { results: PokemonListResult[] };
 
 export const usePokemon = (limit = 150) => {
+  const isMounted = useRef(true);
   const [pokemonList, setPokemonList] = useState<PokemonDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
     const fetchPokemon = async () => {
       try {
-        if (!isMounted) return;
+        if (!isMounted.current) return;
         setLoading(true);
         setError(null);
 
@@ -25,6 +24,8 @@ export const usePokemon = (limit = 150) => {
 
         const data = (await response.json()) as PokemonApiListResponse;
 
+        // Fetch per-Pokemon details after the list (list endpoint lacks stats/sprites)
+        // TODO: Shuffle and cap the list here to avoid fetching everything
         const detailedData = await Promise.all(
           data.results.map(async (pokemon: PokemonListResult) => {
             const detailsResponse = await fetch(pokemon.url);
@@ -32,21 +33,15 @@ export const usePokemon = (limit = 150) => {
           })
         );
 
-        if (isMounted) {
+        if (isMounted.current) {
           setPokemonList(detailedData);
         }
-      } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : typeof err === 'string'
-            ? err
-            : 'Something went wrong';
-        if (isMounted) {
-          setError(message);
+      } catch {
+        if (isMounted.current) {
+          setError('Something went wrong');
         }
       } finally {
-        if (isMounted) {
+        if (isMounted.current) {
           setLoading(false);
         }
       }
@@ -55,7 +50,7 @@ export const usePokemon = (limit = 150) => {
     fetchPokemon();
 
     return () => {
-      isMounted = false;
+      isMounted.current = false;
     };
   }, [limit]);
 
