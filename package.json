@@ -10,7 +10,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "build:web": "EXPO_PUBLIC_BASE_PATH=/our-game expo export -p web --base-path /our-game",
+    "build:web": "expo export -p web",
     "deploy": "bun run build:web && gh-pages -d dist"
   },
   "dependencies": {
