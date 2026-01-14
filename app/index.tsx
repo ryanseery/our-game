@@ -30,7 +30,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <Text style={styles.text}>Poké Duels</Text>
-      <Link href="/our-game/arena" style={styles.button}>
+      <Link href="/arena" style={styles.button}>
         <Text style={styles.buttonText}>Play Game</Text>
       </Link>
     </View>
