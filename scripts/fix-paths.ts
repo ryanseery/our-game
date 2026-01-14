@@ -1,8 +1,11 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
-import { basename, join } from 'path';
+import { basename, dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 const basePath = '/our-game';
-const distDir = join(import.meta.dir, '..', 'dist');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const distDir = join(__dirname, '..', 'dist');
 
 function fixHtmlFile(filePath: string) {
   let content = readFileSync(filePath, 'utf8');
