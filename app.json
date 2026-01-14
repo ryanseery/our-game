@@ -25,7 +25,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro",
-      "basePath": "/our-game"
+      "baseUrl": "/our-game/"
     },
     "plugins": [
       "expo-router",
