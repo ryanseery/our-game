@@ -34,13 +34,11 @@ export const usePokemon = (limit = 150) => {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching pokemon list...');
         const response = await fetch(
           `https://pokeapi.co/api/v2/pokemon?limit=${limit}`
         );
-        console.log('Pokemon list response:', response.status);
+
         const data = (await response.json()) as PokemonApiListResponse;
-        console.log('Fetching details for', data.results.length, 'pokemon...');
 
         const detailedData = await Promise.all(
           data.results.map(async (pokemon: PokemonListResult) => {
@@ -48,7 +46,6 @@ export const usePokemon = (limit = 150) => {
             return (await detailsResponse.json()) as PokemonDetail;
           })
         );
-        console.log('All pokemon details fetched:', detailedData.length);
 
         if (isMounted) {
           setPokemonList(detailedData);
@@ -63,7 +60,6 @@ export const usePokemon = (limit = 150) => {
         if (isMounted) {
           setError(message);
         }
-        console.error('Error fetching Pokémon data:', err);
       } finally {
         if (isMounted) {
           setLoading(false);
