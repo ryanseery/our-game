@@ -8,40 +8,6 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { PokemonDetail } from 'types/pokemon';
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0d0101',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-  },
-  table: {
-    flex: 1,
-    marginVertical: 24,
-    borderRadius: 16,
-    backgroundColor: '#58659b',
-    borderWidth: 2,
-    borderColor: '#3a506b',
-    padding: 16,
-    justifyContent: 'center',
-  },
-  tableContent: {
-    alignItems: 'center',
-  },
-  tableTitle: {
-    color: '#dfe0e4',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 18,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    marginBottom: 16,
-  },
-});
-
 const baseScore = {
   playerOne: 0,
   playerTwo: 0,
@@ -139,3 +105,31 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#0d0101',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+  },
+  table: {
+    flex: 1,
+    marginVertical: 24,
+    borderRadius: 16,
+    backgroundColor: '#58659b',
+    borderWidth: 2,
+    borderColor: '#3a506b',
+    padding: 16,
+    justifyContent: 'center',
+  },
+  tableContent: {
+    alignItems: 'center',
+  },
+  cardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+    marginBottom: 16,
+  },
+});

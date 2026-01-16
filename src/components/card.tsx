@@ -2,6 +2,43 @@ import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 import { PokemonDetail } from 'types/pokemon';
 
+export function Card({
+  details,
+  isWinner,
+}: {
+  details: PokemonDetail | null;
+  isWinner: boolean;
+}) {
+  if (!details) {
+    return (
+      <View style={[styles.root, styles.empty]}>
+        <Text style={styles.emptyText}>Ready</Text>
+      </View>
+    );
+  }
+
+  const imageUri = details.sprites?.front_default;
+
+  return (
+    <View style={[styles.root, isWinner && styles.winner]}>
+      {imageUri ? (
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.image}
+          contentFit="contain"
+        />
+      ) : (
+        <Text style={styles.emptyText}>No sprite</Text>
+      )}
+      <Text style={styles.name}>{details.name}</Text>
+      <Text style={styles.stat}>
+        Power: {details.stats?.[0]?.base_stat ?? 0}
+      </Text>
+      {isWinner ? <Text style={styles.winnerLabel}>Winner</Text> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     width: 150,
@@ -47,40 +84,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-export function Card({
-  details,
-  isWinner,
-}: {
-  details: PokemonDetail | null;
-  isWinner: boolean;
-}) {
-  if (!details) {
-    return (
-      <View style={[styles.root, styles.empty]}>
-        <Text style={styles.emptyText}>Ready</Text>
-      </View>
-    );
-  }
-
-  const imageUri = details.sprites?.front_default;
-
-  return (
-    <View style={[styles.root, isWinner && styles.winner]}>
-      {imageUri ? (
-        <Image
-          source={{ uri: imageUri }}
-          style={styles.image}
-          contentFit="contain"
-        />
-      ) : (
-        <Text style={styles.emptyText}>No sprite</Text>
-      )}
-      <Text style={styles.name}>{details.name}</Text>
-      <Text style={styles.stat}>
-        Power: {details.stats?.[0]?.base_stat ?? 0}
-      </Text>
-      {isWinner ? <Text style={styles.winnerLabel}>Winner</Text> : null}
-    </View>
-  );
-}

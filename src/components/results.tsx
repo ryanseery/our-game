@@ -1,5 +1,23 @@
 import { StyleSheet, Text } from 'react-native';
 
+export type Winner = 'one' | 'two' | 'tie' | null;
+
+const winnerMessages: Record<Exclude<Winner, null>, string> = {
+  tie: 'Tie! No points awarded.',
+  one: 'Player One wins the duel!',
+  two: 'Player Two wins the duel!',
+};
+
+export function Results({ winner }: { winner: Winner }) {
+  if (!winner) return null;
+
+  const message = winnerMessages[winner];
+  const tieStyle = winner === 'tie' ? styles.tieText : null;
+  const textStyle = StyleSheet.flatten([styles.root, tieStyle]);
+
+  return <Text style={textStyle}>{message}</Text>;
+}
+
 const styles = StyleSheet.create({
   root: {
     color: '#f6ae2d',
@@ -11,18 +29,3 @@ const styles = StyleSheet.create({
     color: '#ffd166',
   },
 });
-
-export type Winner = 'one' | 'two' | 'tie' | null;
-
-export function Results({ winner }: { winner: Winner }) {
-  if (!winner) return;
-  return (
-    <Text style={[styles.root, winner === 'tie' && styles.tieText]}>
-      {winner === 'tie'
-        ? 'Tie! No points awarded.'
-        : winner === 'one'
-        ? 'Player One wins the duel!'
-        : 'Player Two wins the duel!'}
-    </Text>
-  );
-}

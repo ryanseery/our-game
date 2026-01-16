@@ -1,13 +1,5 @@
 import { StyleSheet, Text } from 'react-native';
 
-const styles = StyleSheet.create({
-  root: {
-    color: '#dfe0e4',
-    fontSize: 14,
-    marginVertical: 8,
-  },
-});
-
 export function Rounds({
   totalRounds,
   roundsPlayed,
@@ -15,9 +7,18 @@ export function Rounds({
   totalRounds: number;
   roundsPlayed: number;
 }) {
+  const currentRound = Math.min(roundsPlayed + 1, totalRounds);
   return (
     <Text style={styles.root}>
-      Round {Math.min(roundsPlayed + 1, totalRounds)} of {totalRounds}
+      Round {currentRound} of {totalRounds}
     </Text>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    color: '#dfe0e4',
+    fontSize: 14,
+    marginVertical: 8,
+  },
+});

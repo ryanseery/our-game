@@ -1,6 +1,17 @@
 import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+export default function HomeScreen() {
+  return (
+    <View style={styles.root}>
+      <Text style={styles.text}>Poké Duels</Text>
+      <Link href="/arena" style={styles.button}>
+        <Text style={styles.buttonText}>Play Game</Text>
+      </Link>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -25,14 +36,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-export default function HomeScreen() {
-  return (
-    <View style={styles.root}>
-      <Text style={styles.text}>Poké Duels</Text>
-      <Link href="/arena" style={styles.button}>
-        <Text style={styles.buttonText}>Play Game</Text>
-      </Link>
-    </View>
-  );
-}
