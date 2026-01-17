@@ -2,20 +2,13 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 interface Props {
   totalRounds: number;
-  roundsPlayed: number;
-  handleReset: () => void;
-  handleDuel: () => void;
+  currentRound: number;
+  onPress: () => void;
 }
 
-export function DuelButton({
-  totalRounds,
-  roundsPlayed,
-  handleReset,
-  handleDuel,
-}: Props) {
-  const onPress = roundsPlayed >= totalRounds ? handleReset : handleDuel;
+export function DuelButton({ totalRounds, currentRound, onPress }: Props) {
+  const text = currentRound >= totalRounds ? 'New Game' : 'Duel';
 
-  const text = roundsPlayed >= totalRounds ? 'New Game' : 'Duel';
   return (
     <Pressable
       style={[styles.root, !totalRounds && styles.disabled]}

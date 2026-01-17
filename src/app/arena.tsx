@@ -1,74 +1,23 @@
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
 import { Card } from 'components/card';
 import { DuelButton } from 'components/duel-button';
 import { PlayerInfo } from 'components/player-info';
-import { Results, Winner } from 'components/results';
-import { Rounds } from 'components/rounds';
 import { usePokemon } from 'hooks/use-fetch-pokemon';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { PokemonDetail } from 'types/pokemon';
+import { useGameState } from 'hooks/use-game-state';
 
-const baseScore = {
-  playerOne: 0,
-  playerTwo: 0,
-};
+export default function Arena() {
+  const { data, loading, refetch } = usePokemon();
+  const {
+    totalRounds,
+    currentRound,
+    currentCards,
+    duel,
+    players,
+    winnerIndex,
+  } = useGameState(data, undefined, { onReset: refetch });
 
-const baseBattle = { one: null, two: null, winner: null };
-
-export default function HomeScreen() {
-  const { playerOne, playerTwo, loading } = usePokemon();
-
-  const totalRounds = useMemo(
-    () => Math.min(playerOne.length, playerTwo.length),
-    [playerOne.length, playerTwo.length]
-  );
-  const [roundsPlayed, setRoundsPlayed] = useState(0);
-  const [score, setScore] = useState(baseScore);
-  const [currentBattle, setCurrentBattle] = useState<{
-    one: PokemonDetail | null;
-    two: PokemonDetail | null;
-    winner: Winner;
-  }>(baseBattle);
-
-  const handleDuel = () => {
-    if (loading) return;
-    if (!totalRounds) return;
-    if (roundsPlayed >= totalRounds) return;
-
-    const topOne = playerOne[roundsPlayed];
-    const topTwo = playerTwo[roundsPlayed];
-
-    const powerOne = topOne.stats?.[0]?.base_stat ?? 0;
-    const powerTwo = topTwo.stats?.[0]?.base_stat ?? 0;
-
-    let winner: Winner = null;
-
-    if (powerOne > powerTwo) {
-      winner = 'one';
-      setScore((prev) => ({ ...prev, playerOne: prev.playerOne + 1 }));
-    } else if (powerTwo > powerOne) {
-      winner = 'two';
-      setScore((prev) => ({ ...prev, playerTwo: prev.playerTwo + 1 }));
-    }
-
-    setCurrentBattle({ one: topOne, two: topTwo, winner });
-    setRoundsPlayed((prev) => {
-      const next = prev + 1;
-      const finished = totalRounds > 0 && next >= totalRounds;
-
-      if (finished) {
-        setScore(baseScore);
-      }
-
-      return next;
-    });
-  };
-
-  const handleReset = () => {
-    setRoundsPlayed(0);
-    setScore(baseScore);
-    setCurrentBattle({ one: null, two: null, winner: null });
-  };
+  const handleDuel = () => duel();
 
   return (
     <View style={styles.root}>
@@ -76,30 +25,23 @@ export default function HomeScreen() {
         <ActivityIndicator size="large" color="#f6ae2d" />
       ) : (
         <>
-          <PlayerInfo name="Player One" score={score.playerOne} />
+          <PlayerInfo name="Player One" score={players[0].score} />
           <View style={styles.table}>
             <View style={styles.tableContent}>
-              <Results winner={currentBattle.winner} />
+              {/* <Results winner={currentBattle.winner} /> */}
               <View style={styles.cardRow}>
-                <Card
-                  details={currentBattle.one}
-                  isWinner={currentBattle.winner === 'one'}
-                />
-                <Card
-                  details={currentBattle.two}
-                  isWinner={currentBattle.winner === 'two'}
-                />
+                {currentCards.map((card, i) => (
+                  <Card key={i} details={card} isWinner={winnerIndex === i} />
+                ))}
               </View>
               <DuelButton
                 totalRounds={totalRounds}
-                roundsPlayed={roundsPlayed}
-                handleReset={handleReset}
-                handleDuel={handleDuel}
+                currentRound={currentRound}
+                onPress={handleDuel}
               />
-              <Rounds totalRounds={totalRounds} roundsPlayed={roundsPlayed} />
             </View>
           </View>
-          <PlayerInfo name="Player Two" score={score.playerTwo} />
+          <PlayerInfo name="Player Two" score={players[1].score} />
         </>
       )}
     </View>

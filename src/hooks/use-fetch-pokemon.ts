@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { PokemonDetail } from 'types/pokemon';
-import { randomSplitArray } from 'utils/shuffle';
 
 type PokemonListResult = { name: string; url: string };
 type PokemonApiListResponse = { results: PokemonListResult[] };
 
 export const usePokemon = (limit = 150) => {
   const isMounted = useRef(true);
-  const [pokemonList, setPokemonList] = useState<PokemonDetail[]>([]);
+  const [data, setData] = useState<PokemonDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const refetch = () => setReloadToken((token) => token + 1);
 
   useEffect(() => {
     const fetchPokemon = async () => {
@@ -19,7 +21,7 @@ export const usePokemon = (limit = 150) => {
         setError(null);
 
         const response = await fetch(
-          `https://pokeapi.co/api/v2/pokemon?limit=${limit}`
+          `https://pokeapi.co/api/v2/pokemon?limit=${limit}`,
         );
 
         const data = (await response.json()) as PokemonApiListResponse;
@@ -30,11 +32,11 @@ export const usePokemon = (limit = 150) => {
           data.results.map(async (pokemon: PokemonListResult) => {
             const detailsResponse = await fetch(pokemon.url);
             return (await detailsResponse.json()) as PokemonDetail;
-          })
+          }),
         );
 
         if (isMounted.current) {
-          setPokemonList(detailedData);
+          setData(detailedData);
         }
       } catch {
         if (isMounted.current) {
@@ -52,9 +54,7 @@ export const usePokemon = (limit = 150) => {
     return () => {
       isMounted.current = false;
     };
-  }, [limit]);
+  }, [limit, reloadToken]);
 
-  const [playerOne, playerTwo] = randomSplitArray(pokemonList);
-
-  return { playerOne, playerTwo, loading, error };
+  return { data, loading, error, refetch };
 };
