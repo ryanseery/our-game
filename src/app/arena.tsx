@@ -9,10 +9,6 @@ import { useGameState } from 'hooks/use-game-state';
 
 export default function Arena() {
   const { data, loading, refetch } = usePokemon();
-  const state = useGameState(data, { onReset: refetch });
-
-  console.log(state);
-
   const {
     currentCards,
     duel,
@@ -20,7 +16,7 @@ export default function Arena() {
     roundWinner,
     resultWinner,
     matchFinished,
-  } = state;
+  } = useGameState(data, { onReset: refetch });
 
   const handleDuel = () => duel();
 
