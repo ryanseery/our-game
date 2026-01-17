@@ -3,19 +3,24 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Card } from 'components/card';
 import { DuelButton } from 'components/duel-button';
 import { PlayerInfo } from 'components/player-info';
+import { Results } from 'components/results';
 import { usePokemon } from 'hooks/use-fetch-pokemon';
 import { useGameState } from 'hooks/use-game-state';
 
 export default function Arena() {
   const { data, loading, refetch } = usePokemon();
+  const state = useGameState(data, { onReset: refetch });
+
+  console.log(state);
+
   const {
-    totalRounds,
-    currentRound,
     currentCards,
     duel,
     players,
-    winnerIndex,
-  } = useGameState(data, undefined, { onReset: refetch });
+    roundWinner,
+    resultWinner,
+    matchFinished,
+  } = state;
 
   const handleDuel = () => duel();
 
@@ -25,23 +30,21 @@ export default function Arena() {
         <ActivityIndicator size="large" color="#f6ae2d" />
       ) : (
         <>
-          <PlayerInfo name="Player One" score={players[0].score} />
+          <PlayerInfo name="Player 1" score={players[0].score} />
           <View style={styles.table}>
             <View style={styles.tableContent}>
-              {/* <Results winner={currentBattle.winner} /> */}
+              <View style={styles.resultRow}>
+                <Results winner={resultWinner} />
+              </View>
               <View style={styles.cardRow}>
                 {currentCards.map((card, i) => (
-                  <Card key={i} details={card} isWinner={winnerIndex === i} />
+                  <Card key={i} details={card} isWinner={roundWinner === i} />
                 ))}
               </View>
-              <DuelButton
-                totalRounds={totalRounds}
-                currentRound={currentRound}
-                onPress={handleDuel}
-              />
+              <DuelButton matchFinished={matchFinished} onPress={handleDuel} />
             </View>
           </View>
-          <PlayerInfo name="Player Two" score={players[1].score} />
+          <PlayerInfo name="Player 2" score={players[1].score} />
         </>
       )}
     </View>
@@ -66,12 +69,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tableContent: {
+    flex: 1,
+    justifyContent: 'space-evenly',
     alignItems: 'center',
+  },
+  resultRow: {
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   cardRow: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     width: '100%',
-    marginBottom: 16,
   },
 });

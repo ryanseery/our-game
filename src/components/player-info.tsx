@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { flatten } from 'utils/styles';
 
-const MAX_BALLS = 6;
+const MAX_BALLS = 7;
 
 export function PlayerInfo({ name, score }: { name: string; score: number }) {
   const filledCount = Math.max(0, Math.min(score, MAX_BALLS));

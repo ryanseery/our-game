@@ -27,7 +27,6 @@ export const usePokemon = (limit = 150) => {
         const data = (await response.json()) as PokemonApiListResponse;
 
         // Fetch per-Pokemon details after the list (list endpoint lacks stats/sprites)
-        // TODO: Shuffle and cap the list here to avoid fetching everything
         const detailedData = await Promise.all(
           data.results.map(async (pokemon: PokemonListResult) => {
             const detailsResponse = await fetch(pokemon.url);

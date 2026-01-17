@@ -3,68 +3,87 @@ import { useCallback, useMemo, useReducer } from 'react';
 import { randomSplitArray } from 'utils/shuffle';
 import { PokemonDetail } from 'types/pokemon';
 
+const WIN_THRESHOLD = 7;
+
 type Player = { score: number };
 
-type GameState = {
-  totalRounds: number;
-  currentRound: number;
-  players: Player[];
-  winnerIndex: number | null;
-};
+export type Winner = 'one' | 'two' | 'tie' | null;
 
-const baseTotalRounds = 12;
+type GameState = {
+  cardIndex: number;
+  players: Player[];
+  roundWinner: number | null;
+  matchFinished: boolean;
+  matchWinner: Winner;
+};
 
 const baseState: GameState = {
-  totalRounds: baseTotalRounds,
-  currentRound: 0,
+  cardIndex: 0,
   players: [{ score: 0 }, { score: 0 }],
-  winnerIndex: null,
+  roundWinner: null,
+  matchFinished: false,
+  matchWinner: null,
 };
 
-type GameAction = { type: 'PLAY'; payload: { winnerIdx: number | null } };
+type GameAction =
+  | { type: 'PLAY'; payload: { winnerIdx: number | null } }
+  | { type: 'RESET' };
 
+/**
+ * Reducer for duel state.
+ * - Handles scoring, determines threshold finish, and tracks roundWinner/matchWinner.
+ */
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'PLAY': {
-      if (state.currentRound >= state.totalRounds) {
-        return state; // already finished; ignore further updates
-      }
+      const { winnerIdx } = action.payload;
 
-      const winnerIdx = action.payload.winnerIdx;
-
-      // handle score
       const updatedPlayers = state.players.map((player, idx) =>
         winnerIdx !== null && idx === winnerIdx
           ? { ...player, score: player.score + 1 }
           : player,
       );
 
-      const isLastRound = state.currentRound >= state.totalRounds - 1;
+      const thresholdReached =
+        winnerIdx !== null && updatedPlayers[winnerIdx].score >= WIN_THRESHOLD;
 
-      if (isLastRound) {
+      if (thresholdReached) {
+        const scoreA = updatedPlayers[0].score;
+        const scoreB = updatedPlayers[1].score;
+        const result: Winner =
+          scoreA === scoreB ? 'tie' : scoreA > scoreB ? 'one' : 'two';
+
         return {
           ...state,
-          currentRound: 0,
-          players: state.players.map(() => ({ score: 0 })),
-          winnerIndex: null,
+          players: updatedPlayers,
+          roundWinner: winnerIdx,
+          matchFinished: true,
+          matchWinner: result,
         };
       }
 
       return {
         ...state,
-        currentRound: state.currentRound + 1,
+        cardIndex: state.cardIndex + 1,
         players: updatedPlayers,
-        winnerIndex: winnerIdx,
+        roundWinner: winnerIdx,
+        matchFinished: false,
+        matchWinner: null,
       };
+    }
+    case 'RESET': {
+      return { ...baseState };
     }
     default:
       return state;
   }
 }
 
-type Options = { onReset?: () => void };
-
-/** Compute winner index for a round; null means tie or missing cards. */
+/**
+ * Compute the winner index for a single duel based on active cards.
+ * @param cards Two card slots (may contain null when a deck is short).
+ * @returns 0 for player one, 1 for player two, or null for a tie/no cards.
+ */
 function determineWinner(cards: (PokemonDetail | null)[]): number | null {
   let bestIdx: number | null = null;
   let bestPower = -Infinity;
@@ -85,53 +104,64 @@ function determineWinner(cards: (PokemonDetail | null)[]): number | null {
   return tie ? null : bestIdx;
 }
 
-/**
- * Game state for duel rounds.
- * - currentRound is 1-based for consumers; internal state stays 0-based.
- * - Auto-resets after the final round (scores cleared, round set to 0); onReset fires then.
- * - currentCards renders nulls on round 0 for an empty table, but scoring always uses activeCards.
- */
-export function useGameState(
-  data: PokemonDetail[],
-  initialTotalRounds: number = baseTotalRounds,
-  options?: Options,
-) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...baseState,
-    totalRounds: initialTotalRounds,
-  });
+type Options = { onReset: () => void };
 
-  const { totalRounds, currentRound, players, winnerIndex } = state;
+/**
+ * useGameState
+ * Rules and flow:
+ * - Two players duel one card at a time; the higher base_stat wins the round.
+ * - First to seven round wins takes the match (WIN_THRESHOLD).
+ * - roundWinner reflects the latest round winner (0, 1, or null for tie).
+ * - matchFinished/matchWinner are set when a player reaches seven; the next press resets and triggers onReset.
+ * - Cards loop via effectiveIndex so decks can be reused beyond their initial length.
+ * - currentCards is nulled only for the initial idle state before the first duel.
+ * @param data Full list of Pokemon to split into decks.
+ * @param options onReset is called after a finished match when the next press occurs.
+ */
+export function useGameState(data: PokemonDetail[], options: Options) {
+  const [state, dispatch] = useReducer(reducer, baseState);
+
+  const { cardIndex, players, roundWinner, matchFinished, matchWinner } = state;
 
   const decks = useMemo(() => randomSplitArray(data), [data]);
+  const deckLength = useMemo(
+    () => (decks.length ? Math.min(...decks.map((d) => d.length)) : 0),
+    [decks],
+  );
+  const effectiveIndex = deckLength > 0 ? cardIndex % deckLength : 0;
 
   const activeCards = useMemo(
-    () => decks.map((deck) => deck[currentRound] ?? null),
-    [decks, currentRound],
+    () => decks.map((deck) => deck[effectiveIndex] ?? null),
+    [decks, effectiveIndex],
   );
 
-  // Show placeholder/null cards on the initial screen but still keep activeCards for scoring.
   const currentCards = useMemo(
-    () => (currentRound === 0 ? decks.map(() => null) : activeCards),
-    [activeCards, decks, currentRound],
+    () => (cardIndex === 0 ? decks.map(() => null) : activeCards),
+    [activeCards, decks, cardIndex],
   );
 
   const duel = useCallback(() => {
-    const isLastRound = currentRound >= totalRounds - 1;
+    if (deckLength <= 0) return;
+
+    if (matchFinished) {
+      dispatch({ type: 'RESET' });
+      options.onReset();
+      return;
+    }
+
     const winnerIdx = determineWinner(activeCards);
 
     dispatch({ type: 'PLAY', payload: { winnerIdx } });
-    if (isLastRound) {
-      options?.onReset?.();
-    }
-  }, [activeCards, currentRound, totalRounds, options]);
+  }, [activeCards, deckLength, matchFinished, options]);
+
+  const resultWinner: Winner = matchFinished ? matchWinner : null;
 
   return {
-    totalRounds,
-    currentRound: state.currentRound + 1,
     currentCards,
     duel,
-    winnerIndex,
+    roundWinner,
     players,
+    matchFinished,
+    resultWinner,
   };
 }

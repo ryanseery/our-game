@@ -1,20 +1,15 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 interface Props {
-  totalRounds: number;
-  currentRound: number;
+  matchFinished: boolean;
   onPress: () => void;
 }
 
-export function DuelButton({ totalRounds, currentRound, onPress }: Props) {
-  const text = currentRound >= totalRounds ? 'New Game' : 'Duel';
+export function DuelButton({ matchFinished, onPress }: Props) {
+  const text = matchFinished ? 'New Game' : 'Duel';
 
   return (
-    <Pressable
-      style={[styles.root, !totalRounds && styles.disabled]}
-      disabled={!totalRounds}
-      onPress={onPress}
-    >
+    <Pressable style={styles.root} onPress={onPress}>
       <Text style={styles.label}>{text}</Text>
     </Pressable>
   );
@@ -28,9 +23,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     boxShadow: '0px 4px 12px rgba(0,0,0,0.25)',
     elevation: 4,
-  },
-  disabled: {
-    backgroundColor: '#8b4520',
   },
   label: {
     color: '#0b132b',
