@@ -39,11 +39,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(11, 19, 43, 0.9)',
     textAlign: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.25)',
   },
   tieText: {
     color: '#ffd166',

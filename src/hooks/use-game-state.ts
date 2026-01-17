@@ -9,6 +9,8 @@ type Player = { score: number };
 
 export type Winner = 'one' | 'two' | 'tie' | null;
 
+// Game state bookkeeping
+// - cardIndex tracks the current hand index (starts at -1 before the first round)
 type GameState = {
   cardIndex: number;
   players: Player[];
@@ -18,7 +20,7 @@ type GameState = {
 };
 
 const baseState: GameState = {
-  cardIndex: 0,
+  cardIndex: -1, // idle/no rounds yet; first press moves to 0
   players: [{ score: 0 }, { score: 0 }],
   roundWinner: null,
   matchFinished: false,
@@ -26,7 +28,13 @@ const baseState: GameState = {
 };
 
 type GameAction =
-  | { type: 'PLAY'; payload: { winnerIdx: number | null } }
+  | {
+      type: 'PLAY';
+      payload: {
+        winnerIdx: number | null;
+        nextIndex: number;
+      };
+    }
   | { type: 'RESET' };
 
 /**
@@ -36,7 +44,7 @@ type GameAction =
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'PLAY': {
-      const { winnerIdx } = action.payload;
+      const { winnerIdx, nextIndex } = action.payload;
 
       const updatedPlayers = state.players.map((player, idx) =>
         winnerIdx !== null && idx === winnerIdx
@@ -55,6 +63,7 @@ function reducer(state: GameState, action: GameAction): GameState {
 
         return {
           ...state,
+          cardIndex: nextIndex,
           players: updatedPlayers,
           roundWinner: winnerIdx,
           matchFinished: true,
@@ -64,7 +73,7 @@ function reducer(state: GameState, action: GameAction): GameState {
 
       return {
         ...state,
-        cardIndex: state.cardIndex + 1,
+        cardIndex: nextIndex,
         players: updatedPlayers,
         roundWinner: winnerIdx,
         matchFinished: false,
@@ -113,8 +122,8 @@ type Options = { onReset: () => void };
  * - First to seven round wins takes the match (WIN_THRESHOLD).
  * - roundWinner reflects the latest round winner (0, 1, or null for tie).
  * - matchFinished/matchWinner are set when a player reaches seven; the next press resets and triggers onReset.
- * - Cards loop via effectiveIndex so decks can be reused beyond their initial length.
- * - currentCards is nulled only for the initial idle state before the first duel.
+ * - Decks shuffle when data changes (refetch supplies a fresh shuffle).
+ * - currentCards are null until the first duel to avoid rendering pre-start cards.
  * @param data Full list of Pokemon to split into decks.
  * @param options onReset is called after a finished match when the next press occurs.
  */
@@ -124,35 +133,29 @@ export function useGameState(data: PokemonDetail[], options: Options) {
   const { cardIndex, players, roundWinner, matchFinished, matchWinner } = state;
 
   const decks = useMemo(() => randomSplitArray(data), [data]);
-  const deckLength = useMemo(
-    () => (decks.length ? Math.min(...decks.map((d) => d.length)) : 0),
-    [decks],
-  );
-  const effectiveIndex = deckLength > 0 ? cardIndex % deckLength : 0;
 
-  const activeCards = useMemo(
-    () => decks.map((deck) => deck[effectiveIndex] ?? null),
-    [decks, effectiveIndex],
-  );
-
-  const currentCards = useMemo(
-    () => (cardIndex === 0 ? decks.map(() => null) : activeCards),
-    [activeCards, decks, cardIndex],
-  );
+  // Render logic: idle -> blanks; otherwise show the current hand at cardIndex.
+  const currentCards = useMemo(() => {
+    const isIdle = cardIndex < 0 && roundWinner === null;
+    if (isIdle) return decks.map(() => null);
+    return decks.map((deck) => deck[cardIndex] ?? null);
+  }, [cardIndex, decks, roundWinner]);
 
   const duel = useCallback(() => {
-    if (deckLength <= 0) return;
-
     if (matchFinished) {
       dispatch({ type: 'RESET' });
       options.onReset();
       return;
     }
 
-    const winnerIdx = determineWinner(activeCards);
+    // Next draw index drives both the played hand and the upcoming state
+    const nextIndex = state.cardIndex + 1;
+    const cards = decks.map((deck) => deck[nextIndex] ?? null);
 
-    dispatch({ type: 'PLAY', payload: { winnerIdx } });
-  }, [activeCards, deckLength, matchFinished, options]);
+    const winnerIdx = determineWinner(cards);
+
+    dispatch({ type: 'PLAY', payload: { winnerIdx, nextIndex } });
+  }, [decks, matchFinished, options, state.cardIndex]);
 
   const resultWinner: Winner = matchFinished ? matchWinner : null;
 

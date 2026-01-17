@@ -9,10 +9,11 @@ function shuffleArray(array: PokemonDetail[]) {
   return array;
 }
 
-// Shuffle, then split into two capped halves
-export function randomSplitArray(list: PokemonDetail[], cap = 12) {
+// Shuffle, then split the full list evenly
+export function randomSplitArray(list: PokemonDetail[]) {
   const arr = shuffleArray([...list]); // work on a copy
-  const first = arr.slice(0, cap);
-  const second = arr.slice(cap, cap * 2);
+  const half = Math.floor(arr.length / 2);
+  const first = arr.slice(0, half);
+  const second = arr.slice(half);
   return [first, second];
 }

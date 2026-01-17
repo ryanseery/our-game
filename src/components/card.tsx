@@ -1,5 +1,6 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, Platform } from 'react-native';
 import { PokemonDetail } from 'types/pokemon';
 
 export function Card({
@@ -9,18 +10,61 @@ export function Card({
   details: PokemonDetail | null;
   isWinner: boolean;
 }) {
+  const dropAnim = useRef(new Animated.Value(1)).current;
+
+  const key = details?.name ?? 'empty';
+
+  useEffect(() => {
+    if (!details) {
+      dropAnim.setValue(1);
+      return;
+    }
+
+    dropAnim.setValue(0);
+    const useNativeDriver = Platform.OS !== 'web';
+
+    Animated.timing(dropAnim, {
+      toValue: 1,
+      duration: 260,
+      useNativeDriver,
+      easing: Easing.out(Easing.cubic),
+    }).start();
+  }, [key, details, dropAnim]);
+
+  const animatedStyle = useMemo(() => {
+    const translateY = dropAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-18, 0],
+    });
+    const scaleIn = dropAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.9, 1],
+    });
+    const rotate = dropAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['-2deg', '0deg'],
+    });
+
+    return {
+      transform: [{ translateY }, { scale: scaleIn }, { rotate }],
+      opacity: dropAnim,
+    };
+  }, [dropAnim]);
+
   if (!details) {
     return (
-      <View style={[styles.root, styles.empty]}>
+      <Animated.View style={[styles.root, styles.empty, animatedStyle]}>
         <Text style={styles.emptyText}>Ready</Text>
-      </View>
+      </Animated.View>
     );
   }
 
   const imageUri = details.sprites?.front_default;
 
   return (
-    <View style={[styles.root, isWinner && styles.winner]}>
+    <Animated.View
+      style={[styles.root, isWinner && styles.winner, animatedStyle]}
+    >
       {imageUri ? (
         <Image
           source={{ uri: imageUri }}
@@ -35,7 +79,7 @@ export function Card({
         Power: {details.stats?.[0]?.base_stat ?? 0}
       </Text>
       {isWinner ? <Text style={styles.winnerLabel}>Winner</Text> : null}
-    </View>
+    </Animated.View>
   );
 }
 
