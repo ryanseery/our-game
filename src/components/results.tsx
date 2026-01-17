@@ -23,15 +23,13 @@ export function Results(props: Props) {
   if (!computedWinner) return null;
 
   const message = winnerMessages[computedWinner];
-  const tieStyle = computedWinner === 'tie' ? styles.tieText : null;
-  const textStyle = StyleSheet.flatten([styles.root, tieStyle]);
 
-  return <Text style={textStyle}>{message}</Text>;
+  return <Text style={styles.root}>{message}</Text>;
 }
 
 const styles = StyleSheet.create({
   root: {
-    color: '#f6ae2d',
+    color: '#fff',
     fontSize: 16,
     fontWeight: '700',
     paddingHorizontal: 14,
@@ -40,8 +38,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(11, 19, 43, 0.9)',
     textAlign: 'center',
     boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.25)',
-  },
-  tieText: {
-    color: '#ffd166',
   },
 });
