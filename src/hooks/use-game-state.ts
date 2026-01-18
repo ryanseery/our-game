@@ -20,7 +20,7 @@ type GameState = {
 };
 
 const baseState: GameState = {
-  cardIndex: -1, // idle/no rounds yet; first press moves to 0
+  cardIndex: -1,
   players: [{ score: 0 }, { score: 0 }],
   roundWinner: null,
   matchFinished: false,
@@ -28,32 +28,36 @@ const baseState: GameState = {
 };
 
 type GameAction =
-  | {
-      type: 'PLAY';
-      payload: {
-        winnerIdx: number | null;
-        nextIndex: number;
-      };
-    }
+  | { type: 'PLAY'; payload: { decks: PokemonDetail[][] } }
   | { type: 'RESET' };
 
 /**
  * Reducer for duel state.
- * - Handles scoring, determines threshold finish, and tracks roundWinner/matchWinner.
+ * - Stateless about decks: caller must supply the current decks on every PLAY.
+ * - For each play we advance the card index, compare the drawn cards, and award a point to the winner.
+ * - Once a player reaches WIN_THRESHOLD we mark the match as finished and record the winner; otherwise we keep playing.
+ * - RESET simply restores baseState so the next press starts a fresh match.
  */
 function reducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'PLAY': {
-      const { winnerIdx, nextIndex } = action.payload;
+      const nextIndex = state.cardIndex + 1;
+
+      // Next draw index drives both the played hand and the upcoming state
+      const cards = action.payload.decks.map((deck) => deck[nextIndex] ?? null);
+
+      const winnerIdx = determineWinner(cards);
+
+      const hasWinner = winnerIdx !== null;
 
       const updatedPlayers = state.players.map((player, idx) =>
-        winnerIdx !== null && idx === winnerIdx
+        hasWinner && idx === winnerIdx
           ? { ...player, score: player.score + 1 }
           : player,
       );
 
       const thresholdReached =
-        winnerIdx !== null && updatedPlayers[winnerIdx].score >= WIN_THRESHOLD;
+        hasWinner && updatedPlayers[winnerIdx].score >= WIN_THRESHOLD;
 
       if (thresholdReached) {
         const scoreA = updatedPlayers[0].score;
@@ -113,26 +117,27 @@ function determineWinner(cards: (PokemonDetail | null)[]): number | null {
   return tie ? null : bestIdx;
 }
 
-type Options = { onReset: () => void };
-
 /**
  * useGameState
- * Rules and flow:
- * - Two players duel one card at a time; the higher base_stat wins the round.
- * - First to seven round wins takes the match (WIN_THRESHOLD).
- * - roundWinner reflects the latest round winner (0, 1, or null for tie).
- * - matchFinished/matchWinner are set when a player reaches seven; the next press resets and triggers onReset.
- * - Decks shuffle when data changes (refetch supplies a fresh shuffle).
- * - currentCards are null until the first duel to avoid rendering pre-start cards.
- * @param data Full list of Pokemon to split into decks.
- * @param options onReset is called after a finished match when the next press occurs.
+ * Step-by-step:
+ * - Shuffle incoming Pokemon once per render and split into two decks so each player draws from their own pile.
+ * - Store only scores/index/winner flags in reducer state; decks stay external and are passed in with each PLAY action.
+ * - A duel increments the card index, compares that pair of cards, and awards one point to the higher base_stat.
+ * - First player to WIN_THRESHOLD ends the match; we freeze matchWinner/matchFinished until the caller triggers a reset.
+ * - When matchFinished is true and the user presses duel again, we dispatch RESET and call onReset (side effects stay outside the reducer to keep it pure).
+ * - currentCards stays null before the first duel so the UI shows blanks; missing cards in a short deck count as a tie for that round.
+ * @param data Full list of Pokemon to split into two decks.
+ * @param options.onReset callback invoked after a finished match when the user initiates the next duel.
  */
-export function useGameState(data: PokemonDetail[], options: Options) {
+export function useGameState(
+  data: PokemonDetail[],
+  options: { onReset: () => void },
+) {
   const [state, dispatch] = useReducer(reducer, baseState);
 
-  const { cardIndex, players, roundWinner, matchFinished, matchWinner } = state;
-
   const decks = useMemo(() => randomSplitArray(data), [data]);
+
+  const { cardIndex, players, roundWinner, matchFinished, matchWinner } = state;
 
   // Render logic: idle -> blanks; otherwise show the current hand at cardIndex.
   const currentCards = useMemo(() => {
@@ -148,14 +153,8 @@ export function useGameState(data: PokemonDetail[], options: Options) {
       return;
     }
 
-    // Next draw index drives both the played hand and the upcoming state
-    const nextIndex = state.cardIndex + 1;
-    const cards = decks.map((deck) => deck[nextIndex] ?? null);
-
-    const winnerIdx = determineWinner(cards);
-
-    dispatch({ type: 'PLAY', payload: { winnerIdx, nextIndex } });
-  }, [decks, matchFinished, options, state.cardIndex]);
+    dispatch({ type: 'PLAY', payload: { decks } });
+  }, [decks, matchFinished, options]);
 
   const resultWinner: Winner = matchFinished ? matchWinner : null;
 
