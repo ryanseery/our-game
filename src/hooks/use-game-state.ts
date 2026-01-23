@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useReducer } from 'react';
+import { useCallback, useReducer } from 'react';
 
 import { randomSplitArray } from 'utils/shuffle';
 import { PokemonDetail } from 'types/pokemon';
@@ -135,16 +135,18 @@ export function useGameState(
 ) {
   const [state, dispatch] = useReducer(reducer, baseState);
 
-  const decks = useMemo(() => randomSplitArray(data), [data]);
+  const decks = randomSplitArray(data);
 
   const { cardIndex, players, roundWinner, matchFinished, matchWinner } = state;
 
-  // Render logic: idle -> blanks; otherwise show the current hand at cardIndex.
-  const currentCards = useMemo(() => {
+  function getCurrentCard() {
     const isIdle = cardIndex < 0 && roundWinner === null;
     if (isIdle) return decks.map(() => null);
     return decks.map((deck) => deck[cardIndex] ?? null);
-  }, [cardIndex, decks, roundWinner]);
+  }
+
+  // Render logic: idle -> blanks; otherwise show the current hand at cardIndex.
+  const currentCards = getCurrentCard();
 
   const duel = useCallback(() => {
     if (matchFinished) {
